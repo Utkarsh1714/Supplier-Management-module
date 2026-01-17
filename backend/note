@@ -1,0 +1,13 @@
+patch for soft delete and hard delete --- done
+getall controller -> fetch address also --- done
+display_name to display_company_name --- done
+msme and other boolean values should always true/false --- done
+is_deleted -> is_active --- done
+deleted_at field timestamp for soft delete --- done
+email/work-phone number always unique --- done
+valid email format --- done
+supplier name unique --- done
+pagination - page, page_number, search(company_name, first & last name, email, phone number both),// start_date, end_date
+get Inactive supplier - to be done later
+filters - to be done later
+indexing - to be done later
