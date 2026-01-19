@@ -4,6 +4,7 @@ import express from "express";
 import cors from "cors";
 
 import supplierRoute from "./routes/suppliers.route.js";
+import supplierAddressRoute from "./routes/suppliers_address.route.js";
 import { initDatabase } from "./config/initSchema.js";
 
 const app = express();
@@ -16,6 +17,7 @@ const startServer = async () => {
     await initDatabase();
 
     app.use("/api/suppliers", supplierRoute);
+    app.use("/api/supplier-address", supplierAddressRoute)
 
     app.get("/", (req, res) => res.json({ message: "Api running" }));
 

@@ -1,17 +1,105 @@
+// const INIT_DB_SCHEMA = `
+// CREATE DATABASE IF NOT EXISTS supplier_management_module;
+// USE supplier_management_module;
+
+// CREATE TABLE IF NOT EXISTS suppliers (
+//     supplier_id INT AUTO_INCREMENT PRIMARY KEY,
+//     salutation VARCHAR(10) NOT NULL,
+//     first_name VARCHAR(100) NOT NULL,
+//     last_name VARCHAR(100) NOT NULL,
+
+//     company_name VARCHAR(225) NOT NULL,
+//     display_company_name VARCHAR(225) NOT NULL,
+
+//     email VARCHAR(225) NOT NULL,
+//     work_phone_country_code VARCHAR(5),
+//     work_phone VARCHAR(20) UNIQUE,
+//     mobile_phone_country_code VARCHAR(5),
+//     mobile_phone VARCHAR(20),
+
+//     gst VARCHAR(20),
+//     pan VARCHAR(20),
+
+//     is_msme_registered TINYINT(1) DEFAULT 0,
+//     tds_tax_code VARCHAR(50),
+
+//     currency ENUM('INR', 'USD', 'EUR', 'GBP') DEFAULT 'INR',
+//     payment_terms VARCHAR(50),
+
+//     shipping_address_id JSON NULL,
+//     billing_address_id JSON NULL,
+
+//     is_active TINYINT(1) DEFAULT 1,
+//     deleted_at TIMESTAMP NULL DEFAULT NULL,
+
+//     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+//     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+//         ON UPDATE CURRENT_TIMESTAMP,
+
+//     CREATE UNIQUE INDEX uq_supplier_company_name
+//         ON suppliers (company_name(150)),
+
+//     CREATE UNIQUE INDEX uq_supplier_display_company_name
+//         ON suppliers (display_company_name(150)),
+
+//     CREATE UNIQUE INDEX uq_supplier_email
+//         ON suppliers (email(150)),
+
+
+//     INDEX idx_suppliers_active_deleted (is_active, deleted_at),
+//     INDEX idx_suppliers_search_fields (company_name, display_company_name, email, work_phone, mobile_phone, first_name, last_name)
+// ) ENGINE=InnoDB;
+
+// CREATE TABLE IF NOT EXISTS supplier_address (
+//     address_id INT AUTO_INCREMENT PRIMARY KEY,
+//     supplier_id INT NOT NULL,
+
+//     type ENUM('billing', 'shipping') NOT NULL,
+//     address_type ENUM('warehouse', 'office') NOT NULL,
+//     address_line1 VARCHAR(225) NOT NULL,
+//     address_line VARCHAR(225),
+
+//     city VARCHAR(100) NOT NULL,
+//     state VARCHAR(100) NOT NULL,
+//     postal_code VARCHAR(20) NOT NULL,
+//     country VARCHAR(50) NOT NULL,
+
+//     phone_dial_code VARCHAR(5),
+//     phone_number VARCHAR(20),
+
+//     is_primary TINYINT(1) DEFAULT 0,
+
+//     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+//     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+//         ON UPDATE CURRENT_TIMESTAMP,
+
+//     CONSTRAINT fk_supplier_address_supplier
+//         FOREIGN KEY (supplier_id)
+//         REFERENCES suppliers (supplier_id)
+//         ON DELETE CASCADE,
+
+//     INDEX idx_supplier_address_supplier_id (supplier_id)
+// ) ENGINE=InnoDB;
+// `;
+
+// export default INIT_DB_SCHEMA;
+
+
 const INIT_DB_SCHEMA = `
 CREATE DATABASE IF NOT EXISTS supplier_management_module;
 USE supplier_management_module;
 
 CREATE TABLE IF NOT EXISTS suppliers (
     supplier_id INT AUTO_INCREMENT PRIMARY KEY,
+
     salutation VARCHAR(10) NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
 
-    company_name VARCHAR(225) NOT NULL UNIQUE,
-    display_company_name VARCHAR(225) NOT NULL UNIQUE,
+    company_name VARCHAR(225) NOT NULL,
+    display_company_name VARCHAR(225) NOT NULL,
+    email VARCHAR(225) NOT NULL,
 
-    email VARCHAR(225) NOT NULL UNIQUE,
     work_phone_country_code VARCHAR(5),
     work_phone VARCHAR(20) UNIQUE,
     mobile_phone_country_code VARCHAR(5),
@@ -26,6 +114,9 @@ CREATE TABLE IF NOT EXISTS suppliers (
     currency ENUM('INR', 'USD', 'EUR', 'GBP') DEFAULT 'INR',
     payment_terms VARCHAR(50),
 
+    shipping_address_ids JSON NULL,
+    billing_address_ids JSON NULL,
+
     is_active TINYINT(1) DEFAULT 1,
     deleted_at TIMESTAMP NULL DEFAULT NULL,
 
@@ -33,17 +124,22 @@ CREATE TABLE IF NOT EXISTS suppliers (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ON UPDATE CURRENT_TIMESTAMP,
 
-    INDEX idx_suppliers_active_deleted (is_active, deleted_at),
-    INDEX idx_suppliers_search_fields (company_name, display_company_name, email, work_phone, mobile_phone, first_name, last_name)
+    UNIQUE KEY uq_supplier_company_name (company_name(150)),
+    UNIQUE KEY uq_supplier_display_company_name (display_company_name(150)),
+    UNIQUE KEY uq_supplier_email (email(150)),
+
+    INDEX idx_suppliers_active_deleted (is_active, deleted_at)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS supplier_address (
     address_id INT AUTO_INCREMENT PRIMARY KEY,
     supplier_id INT NOT NULL,
 
-    address_type ENUM('billing', 'shipping', 'warehouse', 'office') NOT NULL,
+    type ENUM('billing', 'shipping') NOT NULL,
+    address_type ENUM('warehouse', 'office') NOT NULL,
+
     address_line1 VARCHAR(225) NOT NULL,
-    address_line VARCHAR(225),
+    address_line2 VARCHAR(225),
 
     city VARCHAR(100) NOT NULL,
     state VARCHAR(100) NOT NULL,
@@ -64,7 +160,8 @@ CREATE TABLE IF NOT EXISTS supplier_address (
         REFERENCES suppliers (supplier_id)
         ON DELETE CASCADE,
 
-    INDEX idx_supplier_address_supplier_id (supplier_id)
+    INDEX idx_supplier_address_supplier_id (supplier_id),
+    INDEX idx_supplier_address_type (supplier_id, type)
 ) ENGINE=InnoDB;
 `;
 

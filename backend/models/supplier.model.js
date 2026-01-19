@@ -1,10 +1,10 @@
 import db from "../config/db.js";
-import { buildFilterClause, parseFilters } from "../utils/helperFunc.js";
+import { buildSupplierFilterClause, parseFilters } from "../utils/helperFunc.js";
 
 const getSupplierCount = async (search, filter) => {
   try {
     const filters = parseFilters(filter);
-    let whereClause = buildFilterClause(filters);
+    let whereClause = buildSupplierFilterClause(filters);
 
     const params = [];
 
@@ -65,8 +65,6 @@ export const checkSupplierDuplicate = async ({
       ]
     );
 
-    console.log("Duplicate Check Rows:", rows);
-
     return rows;
   } catch (error) {
     throw new Error(`Duplicate check failed: ${error.message}`);
@@ -99,8 +97,10 @@ export const createSupplier = async (supplier, addresses = []) => {
     tds_tax_code,
     currency,
     payment_terms,
+    shipping_address_ids,
+    billing_address_ids,
     is_active
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `,
       [
         supplier.salutation,
@@ -119,6 +119,8 @@ export const createSupplier = async (supplier, addresses = []) => {
         supplier.tds_tax_code || null,
         supplier.currency || "INR",
         supplier.payment_terms || null,
+        supplier.shipping_address_ids || null,
+        supplier.billing_address_ids || null,
         supplier.is_active ?? true,
       ]
     );
@@ -127,13 +129,14 @@ export const createSupplier = async (supplier, addresses = []) => {
 
     if (addresses.length > 0) {
       for (const address of addresses) {
-        await connection.execute(
+        const [addressResult] = await connection.execute(
           `
                     INSERT INTO supplier_address (
                         supplier_id,
+                        type,
                         address_type,
                         address_line1,
-                        address_line,
+                        address_line2,
                         city,
                         state,
                         postal_code,
@@ -141,13 +144,14 @@ export const createSupplier = async (supplier, addresses = []) => {
                         phone_dial_code,
                         phone_number,
                         is_primary
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     `,
           [
             supplierId,
+            address.type,
             address.address_type,
             address.address_line1,
-            address.address_line || null,
+            address.address_line2 || null,
             address.city,
             address.state,
             address.postal_code,
@@ -156,6 +160,23 @@ export const createSupplier = async (supplier, addresses = []) => {
             address.phone_number || null,
             address.is_primary ?? false,
           ]
+        );
+
+        const addressId = addressResult.insertId;
+        const jsonColumn = address.type === 'billing' ? 'billing_address_ids' : 'shipping_address_ids';
+
+        await connection.execute(
+          `
+          UPDATE suppliers
+          SET ${jsonColumn} = 
+            JSON_ARRAY_APPEND(
+              COALESCE(${jsonColumn}, JSON_ARRAY()),
+              '$',
+              ?
+            )
+          WHERE supplier_id = ?
+          `,
+          [addressId, supplierId]
         );
       }
     }
@@ -175,7 +196,7 @@ export const getAllSupplier = async ({ filter, search, limit, offset }) => {
   try {
     const total = await getSupplierCount(search, filter);
     const filters = parseFilters(filter);
-    let whereClause = buildFilterClause(filters);
+    let whereClause = buildSupplierFilterClause(filters);
 
     const params = [];
 
@@ -218,6 +239,8 @@ export const getAllSupplier = async ({ filter, search, limit, offset }) => {
         s.is_msme_registered,
         s.tds_tax_code,
         s.currency,
+        s.billing_address_ids,
+        s.shipping_address_ids,
         s.payment_terms,
         s.created_at,
         s.updated_at,
@@ -225,9 +248,11 @@ export const getAllSupplier = async ({ filter, search, limit, offset }) => {
         s.is_active,
 
         a.address_id,
+        a.supplier_id,
+        a.type,
         a.address_type,
         a.address_line1,
-        a.address_line,
+        a.address_line2,
         a.city,
         a.state,
         a.postal_code,
@@ -267,6 +292,8 @@ export const getAllSupplier = async ({ filter, search, limit, offset }) => {
           tds_tax_code: row.tds_tax_code,
           currency: row.currency,
           payment_terms: row.payment_terms,
+          billing_address_ids: row.billing_address_ids,
+          shipping_address_ids: row.shipping_address_ids,
           created_at: row.created_at,
           updated_at: row.updated_at,
           deleted_at: row.deleted_at,
@@ -278,6 +305,8 @@ export const getAllSupplier = async ({ filter, search, limit, offset }) => {
       if (row.address_id) {
         suppliersMap.get(row.supplier_id).addresses.push({
           address_id: row.address_id,
+          supplier_id: row.supplier_id,
+          type: row.type,
           address_type: row.address_type,
           address_line1: row.address_line1,
           address_line: row.address_line,

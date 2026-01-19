@@ -6,7 +6,7 @@ export const parseFilters = (filters) => {
     return Array.isArray(filters) ? filters : [];
 }
 
-export const buildFilterClause = (filters) => {
+export const buildSupplierFilterClause = (filters) => {
     const conditions = [];
 
     if (filters.includes('inactive')) {
@@ -26,4 +26,20 @@ export const buildFilterClause = (filters) => {
     }
 
     return conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+}
+
+export const buildAddressFilterClause = (filters) => {
+    const conditions = [];
+
+    if (filters.includes('primary')) {
+        conditions.push('is_primary IS TRUE')
+    }
+    if (filters.includes('shipping')) {
+        conditions.push("type = 'shipping'");
+    }
+    if (filters.includes('billing')) {
+        conditions.push("type = 'billing'");
+    }
+
+    return conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : "";
 }
