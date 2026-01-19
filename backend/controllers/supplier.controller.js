@@ -59,8 +59,10 @@ export const getAllSupplier = async (req, res) => {
     const offset = (page - 1) * limit;
 
     const search = req.query.search || "";
+    const filter = req.query.filter || "";
 
     const results = await SupplierModel.getAllSupplier({
+      filter: filter,
       search: search,
       limit,
       offset
@@ -175,7 +177,7 @@ export const toggleSoftDeleteSupplier = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Supplier deleted successfully (soft delete)",
+      message: "Supplier status updated successfully",
     });
   } catch (error) {
     console.error("Delete Supplier Error:", error);

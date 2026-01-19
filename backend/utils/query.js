@@ -33,7 +33,8 @@ CREATE TABLE IF NOT EXISTS suppliers (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ON UPDATE CURRENT_TIMESTAMP,
 
-    INDEX idx_suppliers_active_deleted (is_active, deleted_at)
+    INDEX idx_suppliers_active_deleted (is_active, deleted_at),
+    INDEX idx_suppliers_search_fields (company_name, display_company_name, email, work_phone, mobile_phone, first_name, last_name)
 ) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS supplier_address (

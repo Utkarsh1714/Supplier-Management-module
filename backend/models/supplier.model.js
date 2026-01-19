@@ -1,27 +1,28 @@
 import db from "../config/db.js";
+import { buildFilterClause, parseFilters } from "../utils/helperFunc.js";
 
-const getSupplierCount = async (search) => {
+const getSupplierCount = async (search, filter) => {
   try {
-    let whereClause = `
-      WHERE s.is_active = 1
-        AND s.deleted_at IS NULL
-    `;
+    const filters = parseFilters(filter);
+    let whereClause = buildFilterClause(filters);
 
     const params = [];
 
     if (search) {
+      whereClause += whereClause ? ' AND' : 'WHERE';
       whereClause += `
-        AND (
+        (
           s.company_name LIKE ?
           OR s.display_company_name LIKE ?
           OR s.email LIKE ?
           OR s.work_phone LIKE ?
+          OR s.mobile_phone LIKE ?
           OR s.first_name LIKE ?
           OR s.last_name LIKE ?
         )
       `;
       const keyword = `%${search}%`;
-      params.push(keyword, keyword, keyword, keyword, keyword, keyword);
+      params.push(keyword, keyword, keyword, keyword, keyword, keyword, keyword);
     }
 
     const [[row]] = await db.execute(
@@ -170,30 +171,29 @@ export const createSupplier = async (supplier, addresses = []) => {
 };
 
 // Get all supplier
-export const getAllSupplier = async ({ search, limit, offset }) => {
+export const getAllSupplier = async ({ filter, search, limit, offset }) => {
   try {
-    const total = await getSupplierCount(search);
-
-    let whereClause = `
-      WHERE s.is_active = 1
-        AND s.deleted_at IS NULL
-    `;
+    const total = await getSupplierCount(search, filter);
+    const filters = parseFilters(filter);
+    let whereClause = buildFilterClause(filters);
 
     const params = [];
 
     if (search) {
+      whereClause += whereClause ? ' AND' : 'WHERE';
       whereClause += `
-        AND (
+        (
           s.company_name LIKE ?
           OR s.display_company_name LIKE ?
           OR s.email LIKE ?
           OR s.work_phone LIKE ?
+          OR s.mobile_phone LIKE ?
           OR s.first_name LIKE ?
           OR s.last_name LIKE ?
         )
       `;
       const keyword = `%${search}%`;
-      params.push(keyword, keyword, keyword, keyword, keyword, keyword);
+      params.push(keyword, keyword, keyword, keyword, keyword, keyword, keyword);
     }
 
     limit = Number(limit);
@@ -301,8 +301,6 @@ export const getAllSupplier = async ({ search, limit, offset }) => {
   }
 };
 
-
-
 // Get supplier by id with address
 export const getSupplierById = async (supplierId) => {
   try {
@@ -348,7 +346,7 @@ export const updateSupplier = async (supplierId, updateData) => {
             UPDATE suppliers
             SET ${setClause}
             WHERE supplier_id = ?
-            AND is_deleted = FALSE
+            AND is_active = FALSE
             `,
       [...values, supplierId]
     );

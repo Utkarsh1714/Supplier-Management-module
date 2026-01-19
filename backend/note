@@ -8,6 +8,11 @@ email/work-phone number always unique --- done
 valid email format --- done
 supplier name unique --- done
 pagination - page, page_number, search(company_name, first & last name, email, phone number both),// start_date, end_date
-get Inactive supplier - to be done later
-filters - to be done later
+get Inactive supplier -> to be done later --- done 
+filters - multiple filters support with comma-separated values --- done
+  Usage Examples:
+  - GET /?filter=Inactive (inactive suppliers)
+  - GET /?filter=msme_registered (active MSME suppliers)
+  - GET /?filter=not_msme_registered (active non-MSME suppliers)
+  - GET /?filter=Inactive,not_msme_registered (inactive non-MSME suppliers)
 indexing - to be done later
